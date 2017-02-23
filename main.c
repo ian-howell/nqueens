@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <unistd.h>
 #include <ncurses.h>
+//#define show_errors
 
 typedef struct Grid Grid;
 struct Grid
@@ -16,6 +17,7 @@ void print_grid(const Grid* grid);
 void delete_grid(Grid* grid);
 int n_queens(Grid* board, const unsigned int current_queen);
 int is_valid(Grid* board, const unsigned int row, const unsigned int col);
+void flash_error(unsigned int row, unsigned int col);
 
 int DELAY = 500000;
 
@@ -28,6 +30,7 @@ int main(int argc, char** argv)
   init_pair(3, COLOR_GREEN, COLOR_BLACK);
   init_pair(4, COLOR_GREEN, COLOR_WHITE);
   init_pair(5, COLOR_RED  , COLOR_BLACK);
+  init_pair(6, COLOR_GREEN, COLOR_RED  );
   curs_set(0);
 
   int size = 8;
@@ -170,11 +173,30 @@ int is_valid(Grid* board, const unsigned int row, const unsigned int col)
   {
     unsigned int delta = row - i;
     if (board->grid[i][col] == 'Q')
+    {
+      flash_error(i, col);
       return 0;
+    }
     if ((col + delta < board->size) && (board->grid[i][col + delta] == 'Q'))
+    {
+      flash_error(i, col + delta);
       return 0;
+    }
     if (((int)(col - delta) >= 0) && (board->grid[i][col - delta] == 'Q'))
+    {
+      flash_error(i, col - delta);
       return 0;
+    }
   }
   return 1;
+}
+
+void flash_error(unsigned int row, unsigned int col)
+{
+  #ifdef show_errors
+  attron(COLOR_PAIR(6));
+  mvwprintw(stdscr, row, col, "Q");
+  refresh();
+  usleep(DELAY * 5);
+  #endif
 }
