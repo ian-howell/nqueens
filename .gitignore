@@ -1,0 +1,5 @@
+# Executable
+nqueens
+
+# Any object files
+*.o
