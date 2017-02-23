@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <unistd.h>
+#include <ncurses.h>
 
 typedef struct Grid Grid;
 struct Grid
@@ -16,16 +17,41 @@ void delete_grid(Grid* grid);
 int n_queens(Grid* board, const unsigned int current_queen);
 int is_valid(Grid* board, const unsigned int row, const unsigned int col);
 
+int DELAY = 500000;
+
 int main(int argc, char** argv)
 {
+  initscr();
+  start_color();
+  init_pair(1, COLOR_BLACK, COLOR_BLACK);
+  init_pair(2, COLOR_WHITE, COLOR_WHITE);
+  init_pair(3, COLOR_GREEN, COLOR_BLACK);
+  init_pair(4, COLOR_GREEN, COLOR_WHITE);
+  init_pair(5, COLOR_RED  , COLOR_BLACK);
+  curs_set(0);
+
   int size = 8;
-  if (argc == 2)
+  if (argc >= 2)
     sscanf(argv[1], "%d", &size);
-  printf("%d\n", size);
+  if (argc >= 3)
+    sscanf(argv[2], "%d", &DELAY);
+
 
   Grid* board = create_grid(size);
-  n_queens(board, board->size);
+  if (n_queens(board, board->size))
+  {
+    attron(COLOR_PAIR(3));
+    mvwprintw(stdscr, board->size, 0, "Success!");
+  }
+  else
+  {
+    attron(COLOR_PAIR(5));
+    mvwprintw(stdscr, board->size, 0, "Failure...");
+  }
+
   delete_grid(board);
+  getch();
+  endwin();
   return 0;
 }
 
@@ -55,9 +81,22 @@ void print_grid(const Grid* grid)
   for (i = 0; i < grid->size; i++)
   {
     for (j = 0; j < grid->size; j++)
-      printf("%c", grid->grid[i][j]);
-    printf("\n");
+    {
+      if (grid->grid[i][j] == '0')
+        attron(COLOR_PAIR(1));
+      else if (grid->grid[i][j] == 'X')
+        attron(COLOR_PAIR(2));
+      else if (grid->grid[i][j] == 'Q')
+      {
+        if ((i + j) % 2)
+          attron(COLOR_PAIR(3));
+        else
+          attron(COLOR_PAIR(4));
+      }
+      mvwprintw(stdscr, i, j, "%c", grid->grid[i][j]);
+    }
   }
+  refresh();
   return;
 }
 
@@ -95,8 +134,7 @@ int n_queens(Grid* board, const unsigned int current_queen)
     // Place a queen
     board->grid[row][i] = 'Q';
     print_grid(board);
-    printf("\n");
-    usleep(50000);
+    usleep(DELAY);
 
     // Check if that queen breaks any of the other queens
     if (!is_valid(board, row, i))
@@ -105,10 +143,6 @@ int n_queens(Grid* board, const unsigned int current_queen)
         board->grid[row][i] = '0';
       else
         board->grid[row][i] = 'X';
-
-      print_grid(board);
-      printf("\n");
-      usleep(50000);
     }
     else
     {
@@ -122,10 +156,6 @@ int n_queens(Grid* board, const unsigned int current_queen)
           board->grid[row][i] = '0';
         else
           board->grid[row][i] = 'X';
-
-        print_grid(board);
-        printf("\n");
-        usleep(50000);
       }
     }
   }
