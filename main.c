@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <unistd.h>
 
 typedef struct Grid Grid;
 struct Grid
@@ -12,6 +13,8 @@ struct Grid
 Grid* create_grid(const unsigned int size);
 void print_grid(const Grid* grid);
 void delete_grid(Grid* grid);
+int n_queens(Grid* board, const unsigned int current_queen);
+int is_valid(Grid* board, const unsigned int row, const unsigned int col);
 
 int main(int argc, char** argv)
 {
@@ -21,7 +24,7 @@ int main(int argc, char** argv)
   printf("%d\n", size);
 
   Grid* board = create_grid(size);
-  print_grid(board);
+  n_queens(board, board->size);
   delete_grid(board);
   return 0;
 }
@@ -78,4 +81,70 @@ void delete_grid(Grid* grid)
     free(grid);
   }
   return;
+}
+
+int n_queens(Grid* board, const unsigned int current_queen)
+{
+  if (current_queen == 0) // success!
+    return 1;
+
+  unsigned int i;
+  for (i = 0; i < board->size; i++)
+  {
+    unsigned int row = board->size - current_queen;
+    // Place a queen
+    board->grid[row][i] = 'Q';
+    print_grid(board);
+    printf("\n");
+    usleep(50000);
+
+    // Check if that queen breaks any of the other queens
+    if (!is_valid(board, row, i))
+    {
+      if ((row + i) % 2)
+        board->grid[row][i] = '0';
+      else
+        board->grid[row][i] = 'X';
+
+      print_grid(board);
+      printf("\n");
+      usleep(50000);
+    }
+    else
+    {
+      if (n_queens(board, current_queen-1))
+      {
+        return 1;
+      }
+      else
+      {
+        if ((row + i) % 2)
+          board->grid[row][i] = '0';
+        else
+          board->grid[row][i] = 'X';
+
+        print_grid(board);
+        printf("\n");
+        usleep(50000);
+      }
+    }
+  }
+  return 0;
+}
+
+int is_valid(Grid* board, const unsigned int row, const unsigned int col)
+{
+  unsigned int i;
+  // check column
+  for (i = 0; i < row; i++)
+  {
+    unsigned int delta = row - i;
+    if (board->grid[i][col] == 'Q')
+      return 0;
+    if ((col + delta < board->size) && (board->grid[i][col + delta] == 'Q'))
+      return 0;
+    if (((int)(col - delta) >= 0) && (board->grid[i][col - delta] == 'Q'))
+      return 0;
+  }
+  return 1;
 }
