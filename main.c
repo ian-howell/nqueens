@@ -1,25 +1,18 @@
+#include <ncurses.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stddef.h>
 #include <unistd.h>
-#include <ncurses.h>
+
+#include "grid.h"
+
 //#define show_errors
 
-typedef struct Grid Grid;
-struct Grid
-{
-    size_t size;
-    char** grid;
-};
-
-Grid* create_grid(const unsigned int size);
-void print_grid(const Grid* grid);
-void delete_grid(Grid* grid);
 int n_queens(Grid* board, const unsigned int current_queen);
 int is_valid(Grid* board, const unsigned int row, const unsigned int col);
 void flash_error(unsigned int row, unsigned int col);
 
-int DELAY = 500000;
+int delay = 500000;
 
 int main(int argc, char** argv)
 {
@@ -38,7 +31,7 @@ int main(int argc, char** argv)
         sscanf(argv[1], "%d", &size);
     }
     if (argc >= 3) {
-        sscanf(argv[2], "%d", &DELAY);
+        sscanf(argv[2], "%d", &delay);
     }
 
     Grid* board = create_grid(size);
@@ -56,70 +49,6 @@ int main(int argc, char** argv)
     return 0;
 }
 
-Grid* create_grid(const unsigned int size)
-{
-    Grid *new_grid = malloc(sizeof(Grid));
-    new_grid->size = size;
-    new_grid->grid = malloc(size * sizeof(char*));
-    for (unsigned int i = 0; i < size; i++) {
-        new_grid->grid[i] = malloc(size * sizeof(char));
-        for (unsigned int j = 0; j < size; j++) {
-            if ((i + j) % 2) {
-                new_grid->grid[i][j] = '0';
-            } else {
-                new_grid->grid[i][j] = 'X';
-            }
-        }
-    }
-    return new_grid;
-}
-
-void print_grid(const Grid* grid)
-{
-    unsigned int i, j;
-    for (i = 0; i < grid->size; i++)
-    {
-        for (j = 0; j < grid->size; j++)
-        {
-            if (grid->grid[i][j] == '0') {
-                attron(COLOR_PAIR(1));
-            } else if (grid->grid[i][j] == 'X') {
-                attron(COLOR_PAIR(2));
-            } else if (grid->grid[i][j] == 'Q') {
-                if ((i + j) % 2) {
-                    attron(COLOR_PAIR(3));
-                } else {
-                    attron(COLOR_PAIR(4));
-                }
-            }
-            mvwprintw(stdscr, i, j, "%c", grid->grid[i][j]);
-        }
-    }
-    refresh();
-    return;
-}
-
-void delete_grid(Grid* grid)
-{
-    if (!grid) {
-        return;
-    }
-
-    if (!grid->grid) {
-        free(grid);
-        return;
-    }
-
-    for (unsigned int i = 0; i < grid->size; i++) {
-        if (grid->grid[i]) {
-            free(grid->grid[i]);
-            grid->grid[i] = NULL;
-        }
-    }
-    free(grid->grid);
-    return;
-}
-
 int n_queens(Grid* board, const unsigned int current_queen)
 {
     if (current_queen == 0) { // success!
@@ -131,7 +60,7 @@ int n_queens(Grid* board, const unsigned int current_queen)
         // Place a queen
         board->grid[row][i] = 'Q';
         print_grid(board);
-        usleep(DELAY);
+        usleep(delay);
 
         // Check if that queen breaks any of the other queens
         if (!is_valid(board, row, i)) {
@@ -184,6 +113,6 @@ void flash_error(unsigned int row, unsigned int col)
     attron(COLOR_PAIR(6));
     mvwprintw(stdscr, row, col, "Q");
     refresh();
-    usleep(DELAY * 5);
+    usleep(delay * 5);
 #endif
 }
